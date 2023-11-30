@@ -5,14 +5,13 @@ import os
 app = Flask(__name__)
 
 # Configure MySQL
-app.config['MYSQL_HOST'] =os.environ.get("MYSQL_HOST", "localhost")
+app.config['MYSQL_HOST'] = os.environ.get("MYSQL_HOST", "localhost")
 app.config['MYSQL_USER'] = os.environ.get("MYSQL_USER", "user")
 app.config['MYSQL_PASSWORD'] = os.environ.get("MYSQL_PASSWORD", "")
 app.config['MYSQL_DB'] = os.environ.get("MYSQL_DB", "flask_example")
 app.config['MYSQL_CURSORCLASS'] = 'DictCursor'
 
 mysql = MySQL(app)
-
 
 @app.route('/')
 def index():
@@ -24,8 +23,15 @@ def greet():
     age = request.form['age']
 
     cur = mysql.connection.cursor()
-    cur.execute('INSERT INTO user (name, age) VALUES (\'%s\', \'%s\')' % (name, age))
+    
+    # Using parameterized query to prevent SQL injection
+    query = 'INSERT INTO user (name, age) VALUES (%s, %s)'
+    values = (name, age)
+    cur.execute(query, values)
+    
     mysql.connection.commit()
+    
+    # Fetch data to display in the greeting.html template
     cur.execute('SELECT * FROM user')
     data = cur.fetchall()
     cur.close()
